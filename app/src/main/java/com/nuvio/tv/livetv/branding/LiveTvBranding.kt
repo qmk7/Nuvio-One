@@ -7,7 +7,7 @@ import com.nuvio.tv.R
  * them), so Nuvio's artwork stays untouched and future Nuvio updates merge cleanly.
  */
 object LiveTvBranding {
-    const val APP_NAME = "Nuvio One"
+    const val APP_NAME = "QR Time"
     const val TAGLINE = "All your entertainment. One app."
 
     /** The Nuvio One version of a theme's Nuvio wordmark. */

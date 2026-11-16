@@ -827,7 +827,7 @@ private fun MusicBrand(modifier: Modifier = Modifier) {
         )
         Spacer(Modifier.width(9.dp))
         Text(
-            text = "Nuvio One Music",
+            text = "QR Time Music",
             color = MusicPalette.text,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,

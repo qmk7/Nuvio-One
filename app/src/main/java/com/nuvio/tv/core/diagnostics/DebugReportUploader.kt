@@ -42,7 +42,7 @@ object DebugReportUploader {
                 "content",
                 "Debug report `${report.id}` · ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
             )
-            put("username", "Nuvio One Debug")
+            put("username", "QR Time Debug")
             put("allowed_mentions", JSONObject().put("parse", JSONArray()))
         }
 
