@@ -81,6 +81,7 @@ object DebugReportBuilder {
             appendLine("fireTv=${Build.MANUFACTURER.equals("Amazon", ignoreCase = true)}")
             val packageManager = context.packageManager
             appendLine("leanback=${packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)}")
+            appendLine("deviceType=${com.nuvio.tv.core.device.DeviceTypes.current(context)}")
             appendLine("television=${packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)}")
 
             section("PLAYBACK")

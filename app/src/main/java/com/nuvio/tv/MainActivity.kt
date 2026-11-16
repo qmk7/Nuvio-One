@@ -457,6 +457,7 @@ open class MainActivity : ComponentActivity() {
             calendarRepository.start()
         }
         isFirstResumeAfterCreate = true
+        applyTouchDeviceOrientation()
         window?.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
 
         // Wire the Activity-level launcher to the tracker
@@ -797,6 +798,7 @@ open class MainActivity : ComponentActivity() {
                     )
                 }
                 CompositionLocalProvider(
+                    com.nuvio.tv.core.device.LocalDeviceType provides com.nuvio.tv.core.device.currentDeviceType(),
                     LocalDensity provides clampedFontScaleDensity,
                     LocalBringIntoViewSpec provides bringIntoViewSpec,
                     LocalFastHorizontalNavigationEnabled provides mainUiPrefs.fastHorizontalNavigationEnabled,
@@ -1661,6 +1663,18 @@ open class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         PluginRuntimeHooks.onActivityDestroy()
+    }
+
+    /**
+     * QR Time on phones and tablets: until those screens get their own layouts, keep the app in
+     * landscape (either way up) so the TV layout fits. TVs are left alone.
+     */
+    private fun applyTouchDeviceOrientation() {
+        val deviceType = com.nuvio.tv.core.device.DeviceTypes.current(this)
+        android.util.Log.i("QrTimeDevice", "Device type: $deviceType")
+        if (deviceType.isTouch) {
+            requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
     }
 }
 
