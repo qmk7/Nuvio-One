@@ -291,22 +291,7 @@ fun ThemeSettingsContent(
                 }
             }
 
-            SettingsGroupCard(
-                modifier = Modifier.fillMaxWidth(),
-                title = stringResource(R.string.appearance_launcher_artwork),
-                subtitle = stringResource(R.string.appearance_launcher_artwork_subtitle)
-            ) {
-                SettingsActionRow(
-                    title = stringResource(R.string.appearance_app_icon_and_banner),
-                    subtitle = stringResource(R.string.appearance_app_icon_and_banner_subtitle),
-                    value = appIconState.selected.localizedName(),
-                    enabled = appIconState.pending == null,
-                    onClick = {
-                        viewModel.onEvent(ThemeSettingsEvent.DismissAppIconFailure)
-                        showAppIconDialog = true
-                    }
-                )
-            }
+            // QR Time has a single icon and banner, so the launcher artwork picker is not offered.
 
             AmbientModeSettingsCard()
 
