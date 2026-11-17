@@ -132,9 +132,11 @@ private fun performAt(view: View, windowPoint: Offset, longPress: Boolean): Bool
     val focused = runCatching { config.getOrNull(SemanticsActions.RequestFocus)?.action?.invoke() == true }
         .getOrDefault(false)
     if (longPress) {
-        config.getOrNull(SemanticsActions.OnLongClick)?.action?.let { longClick ->
-            return runCatching { longClick() }.getOrDefault(false)
-        }
+        // Some cards declare a long click that does nothing and returns false (LightweightCard:
+        // `onLongClick { false }`); only stop here when it actually handled the press.
+        val handled = config.getOrNull(SemanticsActions.OnLongClick)?.action
+            ?.let { longClick -> runCatching { longClick() }.getOrDefault(false) } == true
+        if (handled) return true
         // Most TV cards (Continue Watching, posters, episodes, profiles...) don't declare a long
         // click: they watch the remote's OK key being held (LongPressKeyTracker). Send them exactly
         // what a held OK button sends. Elements without a long-press action just get clicked.

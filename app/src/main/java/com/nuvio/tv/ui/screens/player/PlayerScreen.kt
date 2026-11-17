@@ -162,6 +162,9 @@ import androidx.media3.common.Tracks
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.nuvio.tv.ui.touch.playerTouchGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.tv.material3.Border
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
@@ -4123,11 +4126,48 @@ private fun ProgressBar(
         label = "bufferedProgress"
     )
     var isFocused by remember { mutableStateOf(false) }
+    // QR Time: on phones and tablets, touch or drag the bar to move to that point (same preview and
+    // commit as the remote's left/right keys). Compose widens this small bar's touch area to 48dp.
+    val touchSeekable = com.nuvio.tv.core.device.LocalDeviceType.current.isTouch && !isLive && duration > 0
+    val latestPosition by rememberUpdatedState(currentPosition)
+    val latestDuration by rememberUpdatedState(duration)
+    val latestPreview by rememberUpdatedState(onSeekPreview)
+    val latestCommit by rememberUpdatedState(onSeekCommit)
+    val touchSeekModifier = if (touchSeekable) {
+        Modifier.pointerInput(Unit) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                down.consume()
+                val width = size.width.coerceAtLeast(1).toFloat()
+                var sent = latestPosition
+                fun moveTo(x: Float) {
+                    val target = ((x / width).coerceIn(0f, 1f) * latestDuration).toLong()
+                    val delta = target - sent
+                    if (delta != 0L) {
+                        sent = target
+                        latestPreview(delta)
+                    }
+                }
+                moveTo(down.position.x)
+                while (true) {
+                    val event = awaitPointerEvent()
+                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                    change.consume()
+                    if (!change.pressed) break
+                    moveTo(change.position.x)
+                }
+                latestCommit()
+            }
+        }
+    } else {
+        Modifier
+    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(NuvioTheme.spacing.md)
+            .then(touchSeekModifier)
             .then(
                 if (focusRequester != null) Modifier.focusRequester(focusRequester)
                 else Modifier
