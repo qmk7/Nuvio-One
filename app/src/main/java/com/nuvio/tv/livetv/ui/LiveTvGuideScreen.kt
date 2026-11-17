@@ -1734,7 +1734,7 @@ private fun LiveTvGuideScreenBody(
                                         if (it.height != gridHeightPx) gridHeightPx = it.height
                                     },
                                     contentPadding = PaddingValues(bottom = endPadding),
-                                    userScrollEnabled = false
+                                    userScrollEnabled = com.nuvio.tv.core.device.LocalDeviceType.current.isTouch // QR Time: finger scrolling on phones/tablets
                                 ) {
                                     itemsIndexed(channels, key = { _, c -> c.key }) { index, ch ->
                                         androidx.compose.runtime.CompositionLocalProvider(LocalGuideScale provides guideScale(settings)) { GuideRow(

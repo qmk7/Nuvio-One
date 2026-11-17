@@ -644,7 +644,7 @@ private fun RowHeader(lists: List<PanelRowTab>, selected: PanelRowTab, pillsFocu
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 2.dp, vertical = 2.dp),
-                userScrollEnabled = false
+                userScrollEnabled = com.nuvio.tv.core.device.LocalDeviceType.current.isTouch // QR Time: finger scrolling on phones/tablets
             ) {
                 lists.forEach { t ->
                     item(key = t.id) {
@@ -719,7 +719,7 @@ private fun RecentRow(recent: List<PanelRecent>, focus: Int?, showClear: Boolean
         state = state,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 4.dp),
-        userScrollEnabled = false
+        userScrollEnabled = com.nuvio.tv.core.device.LocalDeviceType.current.isTouch // QR Time: finger scrolling on phones/tablets
     ) {
         item(key = "guide") {
             val f = focus == 0

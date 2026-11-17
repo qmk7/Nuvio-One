@@ -54,7 +54,7 @@ import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
+import com.nuvio.tv.ui.touch.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.Player
 import androidx.media3.ui.AspectRatioFrameLayout

@@ -67,6 +67,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import com.nuvio.tv.ui.touch.touchClickBridge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
@@ -815,7 +816,8 @@ open class MainActivity : ComponentActivity() {
                 ) {
                 val transparentPlayerBackdrop = PlayerWindowBackdrop.isTransparentRequested
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    // QR Time: phones and tablets tap the TV components (no-op on TV).
+                    modifier = Modifier.fillMaxSize().touchClickBridge(),
                     shape = RectangleShape,
                     colors = SurfaceDefaults.colors(
                         containerColor = if (transparentPlayerBackdrop) {

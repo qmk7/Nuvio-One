@@ -57,7 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import com.nuvio.tv.ui.touch.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.tv.material3.Icon
 import com.nuvio.tv.livetv.model.EpgProgram
