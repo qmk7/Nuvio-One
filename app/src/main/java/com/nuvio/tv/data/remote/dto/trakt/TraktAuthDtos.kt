@@ -17,18 +17,20 @@ data class TraktDeviceCodeResponseDto(
     @Json(name = "interval") val interval: Int
 )
 
+// QR Time: Trakt's new apps sign in with PKCE and get no client secret. client_secret is optional
+// here and left out of the JSON when null (Moshi skips nulls), so Client ID-only apps can sign in.
 @JsonClass(generateAdapter = true)
 data class TraktDeviceTokenRequestDto(
     @Json(name = "code") val code: String,
     @Json(name = "client_id") val clientId: String,
-    @Json(name = "client_secret") val clientSecret: String
+    @Json(name = "client_secret") val clientSecret: String? = null
 )
 
 @JsonClass(generateAdapter = true)
 data class TraktRefreshTokenRequestDto(
     @Json(name = "refresh_token") val refreshToken: String,
     @Json(name = "client_id") val clientId: String,
-    @Json(name = "client_secret") val clientSecret: String,
+    @Json(name = "client_secret") val clientSecret: String? = null,
     @Json(name = "redirect_uri") val redirectUri: String,
     @Json(name = "grant_type") val grantType: String = "refresh_token"
 )
@@ -37,7 +39,7 @@ data class TraktRefreshTokenRequestDto(
 data class TraktRevokeRequestDto(
     @Json(name = "token") val token: String,
     @Json(name = "client_id") val clientId: String,
-    @Json(name = "client_secret") val clientSecret: String
+    @Json(name = "client_secret") val clientSecret: String? = null
 )
 
 @JsonClass(generateAdapter = true)
