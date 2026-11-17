@@ -161,6 +161,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.Tracks
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.nuvio.tv.ui.touch.playerTouchGestures
 import androidx.tv.material3.Border
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
@@ -1435,6 +1436,25 @@ fun PlayerScreen(
                             )
                         }
                     }
+
+                    // QR Time: on phones and tablets, swipe on the video to scrub and double tap
+                    // its sides to jump 10s. Off while a panel or dialog is open (no-op on TV).
+                    val touchSeekEnabled = uiState.error == null &&
+                        !(uiState.showEpisodesPanel || uiState.showSourcesPanel || uiState.showPartyPanel ||
+                            uiState.showChaptersPanel || uiState.showAudioOverlay || uiState.showSubtitleOverlay ||
+                            uiState.showQualityOverlay || uiState.showYouTubePanel || uiState.showSubtitleStylePanel ||
+                            uiState.showSpeedDialog || uiState.showSubtitleDelayOverlay ||
+                            uiState.showSubtitleTimingDialog || uiState.showMoreDialog)
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .playerTouchGestures(
+                                enabled = touchSeekEnabled,
+                                onPreviewSeekBy = { viewModel.onEvent(PlayerEvent.OnPreviewSeekBy(it)) },
+                                onCommitPreviewSeek = { viewModel.onEvent(PlayerEvent.OnCommitPreviewSeek) },
+                                onSeekBy = { viewModel.onEvent(PlayerEvent.OnSeekBy(it)) }
+                            )
+                    )
 
                     // The generated translated track is drawn here instead of relying on
                     // ExoPlayer's segmented-text renderer.
