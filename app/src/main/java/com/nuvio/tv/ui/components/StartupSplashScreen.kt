@@ -73,9 +73,15 @@ fun StartupSplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Live TV fork: Nuvio One logo (in the theme's colors) and what the app does.
+            // QR Time: the logo artwork, then the wordmark and what the app does.
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(R.drawable.nuvio_one_icon),
+                contentDescription = null,
+                modifier = Modifier.size(132.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
             BrandWordmark(
-                modifier = Modifier.height(88.dp),
+                modifier = Modifier.height(64.dp),
                 contentDescription = com.nuvio.tv.livetv.branding.LiveTvBranding.APP_NAME,
                 drawableOverride = com.nuvio.tv.livetv.branding.LiveTvBranding.iptvWordmark(
                     brandWordmarkRes ?: NuvioTheme.currentTheme.brandWordmarkResource
@@ -89,7 +95,7 @@ fun StartupSplashScreen(
             )
             // Clear room between the tagline and the loading circle (they never overlap: they're
             // stacked, and this gap keeps them visually apart too).
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             LoadingIndicator(modifier = Modifier.size(NuvioTheme.spacing.xxxl))
         }
     }
