@@ -149,8 +149,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1078
-        versionName = "1.2.0-beta.1"
+        // QR Time releases: raise both for every release (tag vX.Y.Z = versionName).
+        versionCode = 1079
+        versionName = "1.2.1"
 
         buildConfigField("String", "PARENTAL_GUIDE_API_URL", "\"${localProperties.getProperty("PARENTAL_GUIDE_API_URL", "")}\"")
         buildConfigField("String", "INTRODB_API_URL", "\"${localProperties.getProperty("INTRODB_API_URL", "")}\"")
@@ -199,7 +200,8 @@ android {
         val updateRepo = (findProperty("livetvUpdateRepo") as String?)
             ?.trim()
             ?.takeIf { it.isNotBlank() }
-            ?: "zoga2o3-ops/Nuvio-One"
+            // QR Time: updates come from this repo's releases only, never the original fork's.
+            ?: "qmk7/Nuvio-One"
         buildConfigField("String", "GITHUB_OWNER", "\"${updateRepo.substringBefore('/', "")}\"")
         buildConfigField("String", "GITHUB_REPO", "\"${updateRepo.substringAfter('/', "")}\"")
     }
