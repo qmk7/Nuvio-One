@@ -129,17 +129,39 @@ private fun performAt(view: View, windowPoint: Offset, longPress: Boolean): Bool
         .onFailure { Log.w(TAG, "hit test failed", it) }
         .getOrNull() ?: return false
     val config = target.config
-    runCatching { config.getOrNull(SemanticsActions.RequestFocus)?.action?.invoke() }
-    val action = if (longPress) {
-        config.getOrNull(SemanticsActions.OnLongClick)?.action
-            ?: config.getOrNull(SemanticsActions.OnClick)?.action
-    } else {
-        config.getOrNull(SemanticsActions.OnClick)?.action
+    val focused = runCatching { config.getOrNull(SemanticsActions.RequestFocus)?.action?.invoke() == true }
+        .getOrDefault(false)
+    if (longPress) {
+        config.getOrNull(SemanticsActions.OnLongClick)?.action?.let { longClick ->
+            return runCatching { longClick() }.getOrDefault(false)
+        }
+        // Most TV cards (Continue Watching, posters, episodes, profiles...) don't declare a long
+        // click: they watch the remote's OK key being held (LongPressKeyTracker). Send them exactly
+        // what a held OK button sends. Elements without a long-press action just get clicked.
+        if (focused && sendHeldSelectKey(view)) return true
     }
+    val action = config.getOrNull(SemanticsActions.OnClick)?.action
     return runCatching { action?.invoke() == true }
         .onFailure { Log.w(TAG, "click failed", it) }
         .getOrDefault(false)
 }
+
+/** DPAD_CENTER down, its auto-repeat (marked as a long press), then up: the remote's long press. */
+private fun sendHeldSelectKey(view: View): Boolean = runCatching {
+    val downTime = android.os.SystemClock.uptimeMillis()
+    val heldTime = downTime + android.view.ViewConfiguration.getLongPressTimeout()
+    val code = android.view.KeyEvent.KEYCODE_DPAD_CENTER
+    val down = android.view.KeyEvent(downTime, downTime, android.view.KeyEvent.ACTION_DOWN, code, 0)
+    val repeat = android.view.KeyEvent(
+        downTime, heldTime, android.view.KeyEvent.ACTION_DOWN, code, 1,
+        0, android.view.KeyCharacterMap.VIRTUAL_KEYBOARD, 0, android.view.KeyEvent.FLAG_LONG_PRESS
+    )
+    val up = android.view.KeyEvent(downTime, heldTime, android.view.KeyEvent.ACTION_UP, code, 0)
+    view.dispatchKeyEvent(down)
+    view.dispatchKeyEvent(repeat)
+    view.dispatchKeyEvent(up)
+    true
+}.onFailure { Log.w(TAG, "long press keys failed", it) }.getOrDefault(false)
 
 /**
  * Topmost node under the point that can be clicked. Children are searched last-drawn first, so an
