@@ -18,6 +18,11 @@ on:
         required: false
         type: string
         default: ""
+      preview:
+        description: "QR Time: publish the release as a pre-release (direct download to try it; the app's updater ignores it until it's promoted)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -240,7 +245,7 @@ jobs:
         with:
           tag_name: ${{ inputs.release_tag }}
           target_commitish: ${{ github.sha }}
-          name: QR Time ${{ inputs.release_tag }}
-          prerelease: false
+          name: QR Time ${{ inputs.release_tag }}${{ inputs.preview && ' (preview)' || '' }}
+          prerelease: ${{ inputs.preview }}
           files: out/*.apk
           generate_release_notes: true
