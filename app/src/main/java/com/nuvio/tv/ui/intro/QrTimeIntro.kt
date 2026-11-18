@@ -46,9 +46,7 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import com.nuvio.tv.R
 import kotlin.math.exp
-import kotlin.math.hypot
 import kotlin.math.min
-import kotlin.random.Random
 
 /**
  * QR Time's opening intro, timed to the owner's own recording (res/raw/qr_time_intro):
@@ -87,7 +85,7 @@ private const val APART = 0.75f
 /** The music has died out: the pieces let go. */
 private const val FALL = 1.93f
 /** Soft gravity, in logo sizes per second squared. */
-private const val GRAVITY = 2.7f
+private const val GRAVITY = 2.719f
 private val NAVY_TOP = Color(0xFF071633)
 private val NAVY_BOTTOM = Color(0xFF040D21)
 private val GLOW = Color(0xFF5A96FF)
@@ -165,49 +163,75 @@ private class Piece(
     val spin: Float
 )
 
-/** The logo square cut into triangles over a jittered 5×5 grid, always the same cut. */
-private fun buildPieces(): List<Piece> {
-    val random = Random(9)
-    val grid = 5
-    val points = Array(grid + 1) { i ->
-        Array(grid + 1) { j ->
-            var x = i / grid.toFloat()
-            var y = j / grid.toFloat()
-            if (i in 1 until grid) x += (random.nextFloat() * 0.56f - 0.28f) / grid
-            if (j in 1 until grid) y += (random.nextFloat() * 0.56f - 0.28f) / grid
-            Offset(x, y)
-        }
-    }
-    val pieces = mutableListOf<Piece>()
-    fun add(a: Offset, b: Offset, c: Offset) {
-        val center = Offset((a.x + b.x + c.x) / 3f, (a.y + b.y + c.y) / 3f)
-        val ox = center.x - 0.5f
-        val oy = center.y - 0.5f
-        val dist = hypot(ox, oy).coerceAtLeast(1e-4f)
-        pieces += Piece(
-            path = Path().apply { moveTo(a.x, a.y); lineTo(b.x, b.y); lineTo(c.x, c.y); close() },
-            center = center,
-            dirX = ox / dist,
-            dirY = oy / dist,
-            separation = 0.015f + random.nextFloat() * 0.018f,
-            tilt = random.nextFloat() * 10f - 5f,
-            // lower pieces let go first, then the rest follow
-            delay = (1f - center.y) * 0.28f + random.nextFloat() * 0.12f,
-            vx = random.nextFloat() * 0.24f - 0.12f + ox * 0.25f,
-            vy = random.nextFloat() * 0.15f - 0.09f,
-            spin = random.nextFloat() * 140f - 70f
-        )
-    }
-    for (i in 0 until grid) {
-        for (j in 0 until grid) {
-            val a = points[i][j]
-            val b = points[i + 1][j]
-            val c = points[i + 1][j + 1]
-            val d = points[i][j + 1]
-            if (random.nextBoolean()) { add(a, b, c); add(a, c, d) } else { add(a, b, d); add(b, c, d) }
-        }
-    }
-    return pieces
+/**
+ * The approved cut: 47 triangles over a jittered 5×5 grid, with each piece's motion, exported from
+ * the preview the owner approved so the app plays exactly that. Per row, in logo units (0..1):
+ * triangle ax, ay, bx, by, cx, cy; pivot x, y; outward direction x, y; separation; tilt (deg);
+ * fall delay (s); fall velocity x, y (logo sizes/s); spin (deg/s).
+ */
+private val PIECE_TABLE: Array<FloatArray> = arrayOf(
+    floatArrayOf(0.0000f, 0.0000f, 0.1447f, 0.0000f, 0.2003f, 0.2446f, 0.1647f, 0.1934f, -0.7380f, -0.6748f, 0.0323f, -2.6321f, 0.2992f, -0.1943f, -0.0354f, 24.3775f),
+    floatArrayOf(0.0000f, 0.0000f, 0.2003f, 0.2446f, 0.0000f, 0.1959f, 0.1450f, 0.2009f, -0.7647f, -0.6443f, 0.0258f, 2.7463f, 0.2342f, -0.1257f, 0.0399f, 11.7796f),
+    floatArrayOf(0.0000f, 0.1959f, 0.2003f, 0.2446f, 0.1531f, 0.4061f, 0.1329f, 0.3127f, -0.8907f, -0.4545f, 0.0233f, -0.9783f, 0.3108f, -0.0738f, -0.0879f, 41.9118f),
+    floatArrayOf(0.0000f, 0.1959f, 0.1531f, 0.4061f, 0.0000f, 0.3858f, 0.1133f, 0.3505f, -0.9327f, -0.3607f, 0.0211f, -0.6643f, 0.2075f, -0.1102f, -0.0416f, -57.5657f),
+    floatArrayOf(0.0000f, 0.3858f, 0.1531f, 0.4061f, 0.2131f, 0.5486f, 0.1556f, 0.4743f, -0.9972f, -0.0744f, 0.0265f, -3.9693f, 0.2413f, -0.2008f, 0.0273f, 43.0570f),
+    floatArrayOf(0.0000f, 0.3858f, 0.2131f, 0.5486f, 0.0000f, 0.5595f, 0.1616f, 0.5106f, -0.9995f, 0.0312f, 0.0241f, 2.0945f, 0.1668f, -0.0272f, -0.0264f, -37.6665f),
+    floatArrayOf(0.0000f, 0.5595f, 0.2131f, 0.5486f, 0.0000f, 0.8411f, 0.1707f, 0.5952f, -0.9607f, 0.2776f, 0.0326f, -0.9910f, 0.1581f, 0.0047f, -0.0348f, 23.4508f),
+    floatArrayOf(0.2131f, 0.5486f, 0.1865f, 0.8228f, 0.0000f, 0.8411f, 0.1798f, 0.6858f, -0.8650f, 0.5018f, 0.0182f, 3.4327f, 0.1190f, -0.1887f, 0.0567f, -45.8141f),
+    floatArrayOf(0.1447f, 0.0000f, 0.4252f, 0.0000f, 0.3616f, 0.1707f, 0.3293f, 0.1073f, -0.3986f, -0.9171f, 0.0323f, 4.8617f, 0.3228f, -0.1606f, -0.0814f, -40.7957f),
+    floatArrayOf(0.1447f, 0.0000f, 0.3616f, 0.1707f, 0.2003f, 0.2446f, 0.2704f, 0.1662f, -0.5667f, -0.8239f, 0.0222f, 1.1155f, 0.3494f, -0.0926f, -0.0694f, 8.6705f),
+    floatArrayOf(0.2003f, 0.2446f, 0.3616f, 0.1707f, 0.3564f, 0.4007f, 0.2810f, 0.2855f, -0.7145f, -0.6997f, 0.0176f, -4.1341f, 0.2668f, -0.0074f, -0.0807f, -6.8039f),
+    floatArrayOf(0.2003f, 0.2446f, 0.3564f, 0.4007f, 0.1531f, 0.4061f, 0.2538f, 0.3248f, -0.8147f, -0.5798f, 0.0279f, 2.6417f, 0.2350f, 0.0320f, -0.0651f, 30.1653f),
+    floatArrayOf(0.1531f, 0.4061f, 0.3564f, 0.4007f, 0.2131f, 0.5486f, 0.2538f, 0.4743f, -0.9946f, -0.1037f, 0.0291f, 3.8026f, 0.2065f, -0.1584f, -0.0833f, 4.0373f),
+    floatArrayOf(0.3564f, 0.4007f, 0.4475f, 0.6101f, 0.2131f, 0.5486f, 0.3308f, 0.5045f, -0.9996f, 0.0268f, 0.0182f, 1.2968f, 0.1488f, 0.0254f, -0.0570f, -68.1780f),
+    floatArrayOf(0.2131f, 0.5486f, 0.4475f, 0.6101f, 0.4307f, 0.7870f, 0.3308f, 0.6677f, -0.7103f, 0.7039f, 0.0183f, -0.4330f, 0.1602f, -0.0693f, -0.0645f, -2.5114f),
+    floatArrayOf(0.2131f, 0.5486f, 0.4307f, 0.7870f, 0.1865f, 0.8228f, 0.3082f, 0.6858f, -0.7183f, 0.6957f, 0.0323f, 0.3543f, 0.2009f, -0.1619f, 0.0594f, 54.4592f),
+    floatArrayOf(0.1865f, 0.8228f, 0.4307f, 0.7870f, 0.4276f, 1.0000f, 0.3097f, 0.8716f, -0.4559f, 0.8900f, 0.0250f, 0.2350f, 0.1004f, 0.0514f, -0.0807f, 19.9935f),
+    floatArrayOf(0.1865f, 0.8228f, 0.4276f, 1.0000f, 0.1946f, 1.0000f, 0.2779f, 0.8897f, -0.4951f, 0.8689f, 0.0249f, -1.9968f, 0.1179f, -0.0022f, -0.0750f, 27.9329f),
+    floatArrayOf(0.4252f, 0.0000f, 0.5554f, 0.0000f, 0.3616f, 0.1707f, 0.4063f, 0.1163f, -0.2371f, -0.9715f, 0.0233f, -0.0978f, 0.3238f, -0.1315f, 0.0004f, -17.7600f),
+    floatArrayOf(0.5554f, 0.0000f, 0.5766f, 0.2195f, 0.3616f, 0.1707f, 0.4683f, 0.1526f, -0.0909f, -0.9959f, 0.0310f, -2.6889f, 0.3361f, 0.0476f, 0.0038f, 52.6189f),
+    floatArrayOf(0.3616f, 0.1707f, 0.5766f, 0.2195f, 0.6253f, 0.3912f, 0.4924f, 0.2810f, -0.0345f, -0.9994f, 0.0158f, 0.9696f, 0.2749f, 0.0411f, -0.0292f, -60.3449f),
+    floatArrayOf(0.3616f, 0.1707f, 0.6253f, 0.3912f, 0.3564f, 0.4007f, 0.4894f, 0.2855f, -0.0492f, -0.9988f, 0.0185f, 1.0812f, 0.2218f, -0.1078f, -0.0370f, -4.1662f),
+    floatArrayOf(0.3564f, 0.4007f, 0.6253f, 0.3912f, 0.4475f, 0.6101f, 0.4894f, 0.5000f, -1.0000f, 0.0000f, 0.0248f, -4.7403f, 0.2331f, -0.0428f, 0.0276f, -68.8001f),
+    floatArrayOf(0.6253f, 0.3912f, 0.5538f, 0.5739f, 0.4475f, 0.6101f, 0.5363f, 0.5000f, 1.0000f, 0.0000f, 0.0324f, 0.9025f, 0.2572f, 0.1266f, 0.0352f, -55.1271f),
+    floatArrayOf(0.4475f, 0.6101f, 0.5538f, 0.5739f, 0.5675f, 0.7755f, 0.5076f, 0.6737f, 0.0434f, 0.9991f, 0.0214f, -2.6868f, 0.1850f, -0.0725f, -0.0572f, -54.5151f),
+    floatArrayOf(0.4475f, 0.6101f, 0.5675f, 0.7755f, 0.4307f, 0.7870f, 0.4985f, 0.6979f, -0.0076f, 1.0000f, 0.0173f, 4.3813f, 0.2017f, -0.0312f, 0.0213f, -4.5487f),
+    floatArrayOf(0.4307f, 0.7870f, 0.5675f, 0.7755f, 0.4276f, 1.0000f, 0.4970f, 0.8656f, -0.0083f, 1.0000f, 0.0246f, -1.3051f, 0.1138f, -0.0645f, -0.0519f, 2.4958f),
+    floatArrayOf(0.5675f, 0.7755f, 0.6347f, 1.0000f, 0.4276f, 1.0000f, 0.5378f, 0.8656f, 0.1028f, 0.9947f, 0.0187f, -0.6074f, 0.1509f, -0.1060f, -0.0750f, 41.9958f),
+    floatArrayOf(0.5554f, 0.0000f, 0.7663f, 0.0000f, 0.5766f, 0.2195f, 0.5846f, 0.1858f, 0.2600f, -0.9656f, 0.0162f, -2.4876f, 0.3302f, 0.0466f, -0.0573f, -61.7947f),
+    floatArrayOf(0.7663f, 0.0000f, 0.8433f, 0.2425f, 0.5766f, 0.2195f, 0.6949f, 0.1752f, 0.5145f, -0.8575f, 0.0201f, -1.9985f, 0.3270f, 0.1637f, 0.0281f, 56.2450f),
+    floatArrayOf(0.5766f, 0.2195f, 0.8433f, 0.2425f, 0.7501f, 0.3864f, 0.6798f, 0.3021f, 0.6724f, -0.7402f, 0.0320f, 3.7658f, 0.3058f, 0.1579f, -0.0764f, -25.5250f),
+    floatArrayOf(0.5766f, 0.2195f, 0.7501f, 0.3864f, 0.6253f, 0.3912f, 0.6631f, 0.3051f, 0.6419f, -0.7668f, 0.0196f, 1.0417f, 0.2536f, 0.0038f, 0.0358f, -14.1272f),
+    floatArrayOf(0.6253f, 0.3912f, 0.7501f, 0.3864f, 0.5538f, 0.5739f, 0.6526f, 0.4789f, 0.9905f, -0.1373f, 0.0189f, -2.2361f, 0.2013f, 0.0648f, -0.0048f, -8.4093f),
+    floatArrayOf(0.7501f, 0.3864f, 0.7991f, 0.5466f, 0.5538f, 0.5739f, 0.6767f, 0.4789f, 0.9929f, -0.1188f, 0.0185f, -0.9783f, 0.1849f, -0.0354f, -0.0085f, -43.6013f),
+    floatArrayOf(0.5538f, 0.5739f, 0.7991f, 0.5466f, 0.5675f, 0.7755f, 0.6767f, 0.6601f, 0.7411f, 0.6714f, 0.0280f, 1.5876f, 0.1117f, 0.0745f, -0.0396f, -7.4093f),
+    floatArrayOf(0.7991f, 0.5466f, 0.7916f, 0.8455f, 0.5675f, 0.7755f, 0.6828f, 0.6949f, 0.6841f, 0.7294f, 0.0261f, 2.6160f, 0.1915f, 0.1021f, -0.0587f, 5.8715f),
+    floatArrayOf(0.5675f, 0.7755f, 0.7916f, 0.8455f, 0.7565f, 1.0000f, 0.6782f, 0.8505f, 0.4534f, 0.8913f, 0.0212f, -4.8088f, 0.1082f, 0.0375f, 0.0403f, -24.6837f),
+    floatArrayOf(0.5675f, 0.7755f, 0.7565f, 1.0000f, 0.6347f, 1.0000f, 0.6299f, 0.8656f, 0.3349f, 0.9423f, 0.0302f, 0.1414f, 0.0495f, 0.0849f, -0.0476f, 4.6902f),
+    floatArrayOf(0.7663f, 0.0000f, 1.0000f, 0.0000f, 1.0000f, 0.2108f, 0.9033f, 0.0967f, 0.7071f, -0.7071f, 0.0164f, -4.8920f, 0.3634f, -0.0099f, -0.0681f, -47.1382f),
+    floatArrayOf(0.7663f, 0.0000f, 1.0000f, 0.2108f, 0.8433f, 0.2425f, 0.8520f, 0.1224f, 0.6818f, -0.7315f, 0.0168f, 3.2407f, 0.3652f, 0.1240f, -0.0309f, 54.3812f),
+    floatArrayOf(0.8433f, 0.2425f, 1.0000f, 0.2108f, 0.7501f, 0.3864f, 0.7825f, 0.3610f, 0.8973f, -0.4414f, 0.0243f, -3.6516f, 0.2617f, 0.0365f, -0.0499f, -25.1377f),
+    floatArrayOf(1.0000f, 0.2108f, 1.0000f, 0.3576f, 0.7501f, 0.3864f, 0.8036f, 0.3640f, 0.9127f, -0.4087f, 0.0221f, -3.1757f, 0.2516f, 0.1649f, -0.0044f, -68.6770f),
+    floatArrayOf(0.7501f, 0.3864f, 1.0000f, 0.3576f, 0.7991f, 0.5466f, 0.8097f, 0.4607f, 0.9921f, -0.1258f, 0.0275f, -4.7988f, 0.2085f, 0.1658f, 0.0117f, 57.1495f),
+    floatArrayOf(1.0000f, 0.3576f, 1.0000f, 0.6088f, 0.7991f, 0.5466f, 0.8187f, 0.5302f, 0.9955f, 0.0944f, 0.0288f, -2.2719f, 0.1488f, 0.0680f, 0.0121f, -37.5121f),
+    floatArrayOf(0.7991f, 0.5466f, 1.0000f, 0.6088f, 1.0000f, 0.8443f, 0.8142f, 0.5665f, 0.9783f, 0.2070f, 0.0211f, 2.4812f, 0.1631f, 0.1029f, -0.0082f, 60.0422f),
+    floatArrayOf(0.7991f, 0.5466f, 1.0000f, 0.8443f, 0.7916f, 0.8455f, 0.8097f, 0.6949f, 0.8464f, 0.5326f, 0.0156f, -3.1359f, 0.1789f, 0.1183f, -0.0760f, -51.1630f),
+    floatArrayOf(0.7916f, 0.8455f, 1.0000f, 0.8443f, 0.7565f, 1.0000f, 0.7885f, 0.8671f, 0.6180f, 0.7862f, 0.0189f, 0.4313f, 0.1455f, 0.0036f, -0.0600f, 26.0097f),
+)
+
+private fun buildPieces(): List<Piece> = PIECE_TABLE.map { r ->
+    Piece(
+        path = Path().apply { moveTo(r[0], r[1]); lineTo(r[2], r[3]); lineTo(r[4], r[5]); close() },
+        center = Offset(r[6], r[7]),
+        dirX = r[8],
+        dirY = r[9],
+        separation = r[10],
+        tilt = r[11],
+        delay = r[12],
+        vx = r[13],
+        vy = r[14],
+        spin = r[15]
+    )
 }
 
 private fun startSound(context: Context): MediaPlayer? = runCatching {
@@ -332,7 +356,9 @@ fun QrTimeIntroOverlay() {
                 if (alpha <= 0.01f) continue
                 val pivot = Offset(piece.center.x * side, piece.center.y * side)
                 translate(dx, dy) {
-                    rotate(angle, pivot) {
+                    // The approved preview turned pieces counter-clockwise for positive angles
+                    // (PIL); Compose turns clockwise, so flip the sign to match it.
+                    rotate(-angle, pivot) {
                         // Paint the triangle with the logo image (anti-aliased edges, no seams drawn).
                         scale(1f / toBitmap, pivot = Offset.Zero) {
                             val bitmapPath = Path().apply {
