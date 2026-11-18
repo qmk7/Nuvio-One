@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- QR Time's own strings. English is the fallback for languages without their own copy. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="qr_time_intro_section">Opening intro</string>
+    <string name="qr_time_intro_section_subtitle">The QR Time logo animation when the app starts.</string>
+    <string name="qr_time_intro_enabled">Play the intro</string>
+    <string name="qr_time_intro_enabled_subtitle">Show the logo animation each time the app opens.</string>
+    <string name="qr_time_intro_sound">Intro sound</string>
+    <string name="qr_time_intro_sound_subtitle">Play its music with the animation.</string>
+</resources>

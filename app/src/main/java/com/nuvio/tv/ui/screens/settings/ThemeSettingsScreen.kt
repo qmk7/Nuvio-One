@@ -293,6 +293,8 @@ fun ThemeSettingsContent(
 
             // QR Time has a single icon and banner, so the launcher artwork picker is not offered.
 
+            QrTimeIntroSettingsCard()
+
             AmbientModeSettingsCard()
 
             SettingsGroupCard(

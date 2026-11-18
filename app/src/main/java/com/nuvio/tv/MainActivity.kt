@@ -1482,6 +1482,8 @@ open class MainActivity : ComponentActivity() {
                             modifier = Modifier.graphicsLayer { alpha = splashAlpha }
                         )
                     }
+                    // QR Time: the opening logo intro, over everything, once per app start.
+                    com.nuvio.tv.ui.intro.QrTimeIntroOverlay()
                     }
                 }
                 }

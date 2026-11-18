@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="qr_time_intro_section">المقدمة الافتتاحية</string>
+    <string name="qr_time_intro_section_subtitle">حركة شعار QR Time عند تشغيل التطبيق.</string>
+    <string name="qr_time_intro_enabled">تشغيل المقدمة</string>
+    <string name="qr_time_intro_enabled_subtitle">عرض حركة الشعار في كل مرة يُفتح فيها التطبيق.</string>
+    <string name="qr_time_intro_sound">صوت المقدمة</string>
+    <string name="qr_time_intro_sound_subtitle">تشغيل الموسيقى مع الحركة.</string>
+</resources>
