@@ -150,8 +150,8 @@ android {
         minSdk = 24
         targetSdk = 36
         // QR Time releases: raise both for every release (tag vX.Y.Z = versionName).
-        versionCode = 1081
-        versionName = "1.2.3"
+        versionCode = 1082
+        versionName = "1.2.4"
 
         buildConfigField("String", "PARENTAL_GUIDE_API_URL", "\"${localProperties.getProperty("PARENTAL_GUIDE_API_URL", "")}\"")
         buildConfigField("String", "INTRODB_API_URL", "\"${localProperties.getProperty("INTRODB_API_URL", "")}\"")
